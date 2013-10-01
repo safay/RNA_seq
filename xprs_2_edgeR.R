@@ -2,7 +2,7 @@
 
 # R script for analyzing differential gene expression using expression data from eXpress and annotations from Trinotate
 # by Scott Fay 
-# last updated 2013 Sept 25
+# last updated 1 Oct 2013
 # This work is licensed under the Creative Commons Attribution-ShareAlike 3.0 Unported License. To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/.
 
 # install needed packages:
@@ -168,53 +168,53 @@ all_fpkm <- merge(all_fpkm, J4_fpkm)
 all_fpkm <- merge(all_fpkm, J5_fpkm)
 
 # make total count data frames
-A4_count <- data.frame(target_id=A4$target_id, A4_count=A4$eff_counts)
-A5_count <- data.frame(target_id=A5$target_id, A5_count=A5$eff_counts)
-A6_count <- data.frame(target_id=A6$target_id, A6_count=A6$eff_counts)
-A7_count <- data.frame(target_id=A7$target_id, A7_count=A7$eff_counts)
-A8_count <- data.frame(target_id=A8$target_id, A8_count=A8$eff_counts)
-B4_count <- data.frame(target_id=B4$target_id, B4_count=B4$eff_counts)
-B5_count <- data.frame(target_id=B5$target_id, B5_count=B5$eff_counts)
-B6_count <- data.frame(target_id=B6$target_id, B6_count=B6$eff_counts)
-B7_count <- data.frame(target_id=B7$target_id, B7_count=B7$eff_counts)
-B8_count <- data.frame(target_id=B8$target_id, B8_count=B8$eff_counts)
-C1_count <- data.frame(target_id=C1$target_id, C1_count=C1$eff_counts)
-C2_count <- data.frame(target_id=C2$target_id, C2_count=C2$eff_counts)
-C3_count <- data.frame(target_id=C3$target_id, C3_count=C3$eff_counts)
-C4_count <- data.frame(target_id=C4$target_id, C4_count=C4$eff_counts)
-C5_count <- data.frame(target_id=C5$target_id, C5_count=C5$eff_counts)
-D1_count <- data.frame(target_id=D1$target_id, D1_count=D1$eff_counts)
-D2_count <- data.frame(target_id=D2$target_id, D2_count=D2$eff_counts)
-D3_count <- data.frame(target_id=D3$target_id, D3_count=D3$eff_counts)
-D4_count <- data.frame(target_id=D4$target_id, D4_count=D4$eff_counts)
-D5_count <- data.frame(target_id=D5$target_id, D5_count=D5$eff_counts)
-E1_count <- data.frame(target_id=E1$target_id, E1_count=E1$eff_counts)
-E2_count <- data.frame(target_id=E2$target_id, E2_count=E2$eff_counts)
-E3_count <- data.frame(target_id=E3$target_id, E3_count=E3$eff_counts)
-E4_count <- data.frame(target_id=E4$target_id, E4_count=E4$eff_counts)
-E5_count <- data.frame(target_id=E5$target_id, E5_count=E5$eff_counts)
-F1_count <- data.frame(target_id=F1$target_id, F1_count=F1$eff_counts)
-F2_count <- data.frame(target_id=F2$target_id, F2_count=F2$eff_counts)
-F3_count <- data.frame(target_id=F3$target_id, F3_count=F3$eff_counts)
-F4_count <- data.frame(target_id=F4$target_id, F4_count=F4$eff_counts)
-F5_count <- data.frame(target_id=F5$target_id, F5_count=F5$eff_counts)
-G1_count <- data.frame(target_id=G1$target_id, G1_count=G1$eff_counts)
-G2_count <- data.frame(target_id=G2$target_id, G2_count=G2$eff_counts)
-G3_count <- data.frame(target_id=G3$target_id, G3_count=G3$eff_counts)
-G4_count <- data.frame(target_id=G4$target_id, G4_count=G4$eff_counts)
-G5_count <- data.frame(target_id=G5$target_id, G5_count=G5$eff_counts)
-H1_count <- data.frame(target_id=H1$target_id, H1_count=H1$eff_counts)
-H2_count <- data.frame(target_id=H2$target_id, H2_count=H2$eff_counts)
-H3_count <- data.frame(target_id=H3$target_id, H3_count=H3$eff_counts)
-H4_count <- data.frame(target_id=H4$target_id, H4_count=H4$eff_counts)
-H5_count <- data.frame(target_id=H5$target_id, H5_count=H5$eff_counts)
-J1_count <- data.frame(target_id=J1$target_id, J1_count=J1$eff_counts)
-J2_count <- data.frame(target_id=J2$target_id, J2_count=J2$eff_counts)
-J3_count <- data.frame(target_id=J3$target_id, J3_count=J3$eff_counts)
-J4_count <- data.frame(target_id=J4$target_id, J4_count=J4$eff_counts)
-J5_count <- data.frame(target_id=J5$target_id, J5_count=J5$eff_counts)
+A4_count <- data.frame(target_id=A4$target_id, A4_count=A4$tot_counts)
+A5_count <- data.frame(target_id=A5$target_id, A5_count=A5$tot_counts)
+A6_count <- data.frame(target_id=A6$target_id, A6_count=A6$tot_counts)
+A7_count <- data.frame(target_id=A7$target_id, A7_count=A7$tot_counts)
+A8_count <- data.frame(target_id=A8$target_id, A8_count=A8$tot_counts)
+B4_count <- data.frame(target_id=B4$target_id, B4_count=B4$tot_counts)
+B5_count <- data.frame(target_id=B5$target_id, B5_count=B5$tot_counts)
+B6_count <- data.frame(target_id=B6$target_id, B6_count=B6$tot_counts)
+B7_count <- data.frame(target_id=B7$target_id, B7_count=B7$tot_counts)
+B8_count <- data.frame(target_id=B8$target_id, B8_count=B8$tot_counts)
+C1_count <- data.frame(target_id=C1$target_id, C1_count=C1$tot_counts)
+C2_count <- data.frame(target_id=C2$target_id, C2_count=C2$tot_counts)
+C3_count <- data.frame(target_id=C3$target_id, C3_count=C3$tot_counts)
+C4_count <- data.frame(target_id=C4$target_id, C4_count=C4$tot_counts)
+C5_count <- data.frame(target_id=C5$target_id, C5_count=C5$tot_counts)
+D1_count <- data.frame(target_id=D1$target_id, D1_count=D1$tot_counts)
+D2_count <- data.frame(target_id=D2$target_id, D2_count=D2$tot_counts)
+D3_count <- data.frame(target_id=D3$target_id, D3_count=D3$tot_counts)
+D4_count <- data.frame(target_id=D4$target_id, D4_count=D4$tot_counts)
+D5_count <- data.frame(target_id=D5$target_id, D5_count=D5$tot_counts)
+E1_count <- data.frame(target_id=E1$target_id, E1_count=E1$tot_counts)
+E2_count <- data.frame(target_id=E2$target_id, E2_count=E2$tot_counts)
+E3_count <- data.frame(target_id=E3$target_id, E3_count=E3$tot_counts)
+E4_count <- data.frame(target_id=E4$target_id, E4_count=E4$tot_counts)
+E5_count <- data.frame(target_id=E5$target_id, E5_count=E5$tot_counts)
+F1_count <- data.frame(target_id=F1$target_id, F1_count=F1$tot_counts)
+F2_count <- data.frame(target_id=F2$target_id, F2_count=F2$tot_counts)
+F3_count <- data.frame(target_id=F3$target_id, F3_count=F3$tot_counts)
+F4_count <- data.frame(target_id=F4$target_id, F4_count=F4$tot_counts)
+F5_count <- data.frame(target_id=F5$target_id, F5_count=F5$tot_counts)
+G1_count <- data.frame(target_id=G1$target_id, G1_count=G1$tot_counts)
+G2_count <- data.frame(target_id=G2$target_id, G2_count=G2$tot_counts)
+G3_count <- data.frame(target_id=G3$target_id, G3_count=G3$tot_counts)
+G4_count <- data.frame(target_id=G4$target_id, G4_count=G4$tot_counts)
+G5_count <- data.frame(target_id=G5$target_id, G5_count=G5$tot_counts)
+H1_count <- data.frame(target_id=H1$target_id, H1_count=H1$tot_counts)
+H2_count <- data.frame(target_id=H2$target_id, H2_count=H2$tot_counts)
+H3_count <- data.frame(target_id=H3$target_id, H3_count=H3$tot_counts)
+H4_count <- data.frame(target_id=H4$target_id, H4_count=H4$tot_counts)
+H5_count <- data.frame(target_id=H5$target_id, H5_count=H5$tot_counts)
+J1_count <- data.frame(target_id=J1$target_id, J1_count=J1$tot_counts)
+J2_count <- data.frame(target_id=J2$target_id, J2_count=J2$tot_counts)
+J3_count <- data.frame(target_id=J3$target_id, J3_count=J3$tot_counts)
+J4_count <- data.frame(target_id=J4$target_id, J4_count=J4$tot_counts)
+J5_count <- data.frame(target_id=J5$target_id, J5_count=J5$tot_counts)
 
-# merge total count data frames
+# merge total counts into one data frame
 all_count <- merge(A4_count, A5_count)
 all_count <- merge(all_count, A6_count)
 all_count <- merge(all_count, A7_count)
@@ -266,8 +266,9 @@ rownames(all_fpkm) <- all_fpkm$target_id
 # remove target_id column
 all_count$target_id <- NULL
 all_fpkm$target_id <- NULL
+# now the data is ready
 
-# define experimental factors
+# define groups
 pH <- factor(c(rep("amb",5), rep("low",5), rep("amb",5), rep("low",5), rep("mid",5), rep("amb",5), rep("mid",5), rep("low",5), rep("mid",5)))
 temp <- factor(c(rep("13C", 5), rep("11C", 5), rep("11C",5), rep("14C", 5), rep("13C",5), rep("14C", 5), rep("14C", 5), rep("13C", 5), rep("11C",5)))
 group <- paste(pH,temp, sep="")
@@ -275,7 +276,7 @@ pH
 temp
 group
 
-# Remove spikes
+# remove spike option
 # retreive the spike IDs generated using blast
 spikes <- scan("~/Google\ Drive/RNA_seq/Data/RKC_Assemblies/spike_transcript_IDs", what = "character")
 # remove the spikes transcripts from the tables
@@ -284,52 +285,67 @@ all_fpkm <- all_fpkm[!rownames(all_fpkm) %in% spikes, ]
 
 # Get annotations
 # "trinotate_annotation_report.txt" is a Trinotate output excel file exported tab-delimited
-transcripts <- read.delim("/Users/safay/Dropbox/Red_King_Crab_Project/RKC_transcriptome_and_annotation/trinotate_annotation_report.txt")
+transcripts <- read.delim("/Users/scottfay/Dropbox/Red_King_Crab_Project/RKC_transcriptome_and_annotation/trinotate_annotation_report.txt")
 
 ##########
 #
-# Differential gene expression (DGE) analysis for various comparisons
-# + make a biological coefficient of variation plot
-# + make a multidimensional scaling plot
+# Set up differential gene expression (DGE) analysis, generate summary plots:
+#   define a model matrix
+#   estimate dispersion
+#   make a plot of biological coefficient of variation vs. log(CPM)
+#   make a multidimensional scaling plot of total counts
+#   fit GLM for each transcript
 #
 ##########
+
 
 # DGEList makes an EdgeR object
 y <- DGEList(counts=all_count, group=group)
+# define the statistical model, a design matrix using the model.matrix function
+# crossed design, same as (~ pH + temp + pH:temp ... see section 3.3.4 in edgeR documentation)
+design <- model.matrix(~pH*temp, data=y$samples) 
+# view the design matrix
+design
+colnames(design)
 # filter out transcripts that do not have at least two reads out of 1,000,000 reads mapped in at least 4 samples
 y <- y[rowSums(1e+06 * y$counts/expandAsMatrix(y$samples$lib.size, dim(y)) > 2) >= 4, ]
 # reset the library sizes after filtering
 y$samples$lib.size <- colSums(y$counts)
 # TMM normalization compensates not just for library size but also the relative expression level among transcripts
 y <- calcNormFactors(y)
-# estimate common dispersion among all transcripts using negative binomial
-y <- estimateCommonDisp(y, verbose=TRUE)
-# estimate tagwise dispersion by an empirical Bayes method based on weighted conditional maximum likelihood.
-y <- estimateTagwiseDisp(y , trend = "none", prior.df = 2 )
+# estimate dispersion for GLM fit, common, trended, and tagwise
+# see edgeR docs for references on dispersion estimates, e.g., "?estimateGLMCommonDisp"
+y <- estimateGLMCommonDisp(y,design) 
+# estimate trended dispersion for use in tagwise dispersion estimate
+y <- estimateGLMTrendedDisp(y,design)
+# estimate tagwise dispersion to be used in glmFit()
+y <- estimateGLMTagwiseDisp(y,design)
 # plot genewise biological coefficient of variation against gene abundance
 plotBCV(y)
 # make plot as a pdf
-pdf(file=paste(out_dir, "BCV_plot_RKC2.pdf", sep=""), height=6, width=6)
-plotBCV(y, main = "RKC2 BCV Plot")
+pdf(file=paste(out_dir, "BCV_plot.pdf", sep=""), height=6, width=6)
+plotBCV(y, main = "Biological Coefficient of Variation")
 dev.off()
 # MDS plot
-plotMDS(y , main = "RKC2 MDS Plot for Count Data", labels = colnames( y$counts ), cex=0.7)
+plotMDS(y , main = "MDS Plot for Count Data", labels = colnames( y$counts ), cex=0.7)
 # make a pdf
-pdf(file=paste(out_dir, "MDS_plot_RKC2.pdf", sep=""), height=6, width=6)
-plotMDS(y , main = "RKC2 MDS Plot for Count Data", labels = colnames( y$counts ), cex=0.7)
+pdf(file=paste(out_dir, "MDS_plot.pdf", sep=""), height=6, width=6)
+plotMDS(y , main = "MDS Plot for Count Data", labels = colnames( y$counts ), cex=0.7)
 dev.off()
 
 # GLM
-# first we must define a design matrix using the model.matrix function
-design <- model.matrix(~pH*temp, data=y$samples) # crossed design, same as ~ pH + temp + pH:temp ... see section 3.3.4 in edgeR documentation
-design
-colnames(design)
 # fit the negative binomial generalized linear model (GLM) for each tag, creating a new fit object
 fit <- glmFit(y, design)
 colnames(fit)
 
 #####
-# Function: get_DGEs
+#
+# Find significantly differentially expressed genes between comparisons
+#
+#####
+
+#####
+# Function: get_DEGs
 # perform LRT (likelihood ratio test) on certain factors
 # returns a data frame that contains both toptags and annotation data
 # arguments:
@@ -376,17 +392,6 @@ DEGlist_pHlow_temp13C <- get_DEGs(compare=6, annot=transcripts, fit=fit, fdr=0.0
 DEGlist_pHmid_temp13C <- get_DEGs(compare=7, annot=transcripts, fit=fit, fdr=0.00001)
 DEGlist_pHlow_temp14C <- get_DEGs(compare=8, annot=transcripts, fit=fit, fdr=0.00001)
 DEGlist_pHmid_temp14C <- get_DEGs(compare=9, annot=transcripts, fit=fit, fdr=0.00001)
-
-# get unique genes from a DEGlist
-# remove genes found in pHlow_temp14C from pHlow
-nrow(DEGlist_pHlow)
-head(DEGlist_pHlow$transcript_id, 20)
-nrow(DEGlist_pHlow_temp14C)
-head(DEGlist_pHlow_temp14C$transcript_id, 20)
-DEGlist_no_interaction_pHlow <- DEGlist_pHlow[ !( DEGlist_pHlow$transcript_id %in% DEGlist_pHlow_temp14C$transcript_id  ) ,  ]
-cat("number of transcripts unique to pHLow vs. pHLow_temp14C:", nrow(DEGlist_no_interaction_pHlow))
-# Write these to a file
-write.csv(DEGlist_no_interaction_pHlow, file=paste(out_dir, "topTags_DEGlist_no_interaction_pHlow_w_annotations_FDR0_00001.csv", sep=""))
 
 # Only get those with Pfam annotations
 annotated_DEGs <- DEGlist_no_interaction_pHlow[ DEGlist_no_interaction_pHlow$Pfam != "." , ]
@@ -459,7 +464,7 @@ get_gene_data <- function(gene, fpkm) {
 
 #####
 # Function: get_annot
-# gets an annotation for a particular gene
+# gets annotation for a particular gene
 #####
 
 get_annot <- function(gene_in, annotation) {
@@ -492,7 +497,7 @@ plot_genewise_fpkm <- function(gene_in, plot_title, add_title) {
 #plot_genewise_fpkm(gene_data)
 
 #####
-# function:plot_interaction
+# function: plot_interaction
 # makes an interaction plot for a given gene
 #####
 
@@ -504,9 +509,9 @@ plot_interaction <- function(gene_data, plot_title, add_title) {
 
 #####
 # function: GOI_data
-# master function to get data and plots from gene Of interest
-#   gene_name: the "transcript_id" for your gene of interest found in both the FPKM data frame and the annotation data frame
-#   annotation: the trinotate annotation report as a data frame
+# master function to get data and plots from Gene Of Interest
+#   gene_name: the "transcript_id" for your gene of interest
+#   annotation: the full trinotate annotation report as a data frame
 #   fpkm_table: the table of FPKM values 
 #####
 
@@ -519,5 +524,3 @@ GOI_data <- function(gene_name, annotation, fpkm_table, graph_title) {
 
 # generate genewise plots based on a gene of interest
 GOI_data("comp100107_c0_seq1", transcripts, all_fpkm, "Carbonic Anhydrase")
-GOI_data("comp105477_c5_seq1", transcripts, all_fpkm, "Chitin synthase")
-GOI_data("comp92552_c2_seq1", transcripts, all_fpkm, "Crustacean calcium binding protein")
