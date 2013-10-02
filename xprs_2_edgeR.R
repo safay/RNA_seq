@@ -1,6 +1,6 @@
 #!/usr/bin/R
 
-# R script for analyzing differential gene expression using expression data from eXpress and annotations from Trinotate
+# R script using edgeR for analyzing differential gene expression using count data from eXpress and annotations from Trinotate
 # by Scott Fay 
 # last updated 1 Oct 2013
 # This work is licensed under the Creative Commons Attribution-ShareAlike 3.0 Unported License. To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/.
@@ -19,6 +19,7 @@ library(edgeR)
 #
 # Load in files with expression estimates (e.g., from eXpress) and FPKM values
 # This part needs to be customized for your particular analysis
+# ensure you use tot_counts for raw count data in edgeR
 #
 ##########
 
@@ -362,9 +363,9 @@ get_DEGs <- function(compare, annot, fit, fdr=0.05) {
   tTags <- topTags(lrt, n=Num_DEG) # get list of DEGs, "topTags"
   cat("Comparison:", tTags$comparison, "\n")
   cat("Total number of genes:", nrow(lrt$table), "\n")
-  cat( "Number of differentially expressed genes with FDR <", fdr, "=", nrow(tTags), "\n")
+  cat("Number of differentially expressed genes with FDR <", fdr, "=", nrow(tTags), "\n")
   DEG
-  #plot
+  cat("...saving an MAplot:", paste(out_dir,"MAplot_", tTags$comparison, "_FDR_", fdr, ".pdf", sep=""), "\n" )
   pdf(file=paste(out_dir,"MAplot_", tTags$comparison, "_FDR_", fdr, ".pdf", sep=""), height=6, width=6)
   detags <- rownames(tTags$table) # n= has to be the number of significantly differentially expressed genes
   plotSmear(lrt,de.tags=detags, cex=0.5) # plot of fold change given CPM, red for those < FDR
@@ -376,10 +377,14 @@ get_DEGs <- function(compare, annot, fit, fdr=0.05) {
   join <- merge(tTags_frame, annot) # gets the intersection of detags and transcripts, i.e., the annotations for the DE transcripts
   cat("percent all transcripts with ORFs:", sum(annot$prot_id != ".") * 100 / nrow(annot), "\n")
   cat("percent toptags with ORFs:", sum(join$prot_id != ".") * 100 / nrow(join), "\n")
-  cat("percent all transcripts with Pfam annotation:", sum(annot$Pfam != ".") * 100 / nrow(annot), "\n")
-  cat("percent toptags with Pfam annotation:", sum(join$Pfam != ".") * 100 / nrow(join), "\n")
-  #pHTagsAnot <- join[!(join$prot_id == "."), ] # this yeilds all the annotation info for transcripts with non-empty (not "." ) prot_id values
-  write.csv(join, file=paste(out_dir, "topTags_", tTags$comparison, "_", fdr, "_w_annotations.csv", sep=""))
+  cat("percent all transcripts with Pfam or TopBlastHit annotation:", sum((annot$Pfam != ".") | (annot$TopBlastHit != ".")) * 100 / nrow(annot), "\n")
+  cat("percent toptags with Pfam or TopBlastHit annotation:", sum((join$Pfam != ".") | (join$TopBlastHit != ".")) * 100 / nrow(join), "\n")
+  cat("number of genes upregulated, (FC > 2):", sum(join$logFC > 1), "\n")
+  cat("number of genes downregulated, (FC < 0.5):", sum(join$logFC < -1 ), "\n")
+  cat("...saving .csv file with all topTags:", paste( out_dir, "topTags_", tTags$comparison, "_", fdr, "_FDR.csv", sep="" ), "\n" )
+  write.csv( join, file=paste(out_dir, "topTags_", tTags$comparison, "_", fdr, "_FDR.csv", sep="" ) )
+  cat("...saving .csv file with pFam OR TopBlastHit annotated topTags:", paste(out_dir, "topTags_", tTags$comparison, "_", fdr, "_FDR_only_w_annot.csv", sep=""), "\n" )
+  write.csv( join[ (join$Pfam != ".") | (join$TopBlastHit != ".") , ], file=paste(out_dir, "topTags_", tTags$comparison, "_", fdr, "_FDR_only_w_PFamAnnot.csv", sep="" ) )
   join
 }
 
@@ -393,11 +398,11 @@ DEGlist_pHmid_temp13C <- get_DEGs(compare=7, annot=transcripts, fit=fit, fdr=0.0
 DEGlist_pHlow_temp14C <- get_DEGs(compare=8, annot=transcripts, fit=fit, fdr=0.00001)
 DEGlist_pHmid_temp14C <- get_DEGs(compare=9, annot=transcripts, fit=fit, fdr=0.00001)
 
-# Only get those with Pfam annotations
-annotated_DEGs <- DEGlist_no_interaction_pHlow[ DEGlist_no_interaction_pHlow$Pfam != "." , ]
-head(annotated_DEGs$TopBlastHit)
-# write TopBlastHit annotations for these genes
-write.csv(annotated_DEGs, file=paste( out_dir, "topTags_DEGlist_no_interaction_pHlow_w_annotations_FDR0_00001_only_w_PfamHits.csv", sep="" ))
+# sort by logFC
+sorted_tags <- annotated_DEGs_pHlow[with(annotated_DEGs_pHlow, order(logFC)), ]
+
+# write a .csv based on a threshold FC, in this case, ( FC < 0.5 ) and ( FC > 2 )
+write.csv(annotated_DEGs_pHlow[ abs(annotated_DEGs_pHlow$logFC) > 1 , ], file=paste( out_dir, "topTags_DEGlist_pHlow_FDR0_00001_PfamHits_logFC_greater_than_2.csv", sep="" )
 
 #####
 # Function: deg_heatmap
