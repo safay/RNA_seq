@@ -24,8 +24,9 @@ library(edgeR)
 ##########
 
 # set working directory
+# this should be a directory with a folder with each library's eXpress output in it, "results.xprs"
 setwd("/Volumes/KINGSTON/RKC_DGE_xprs_only_wkshp")
-# set output directory
+# set directory where you want this script to save its output
 out_dir <- "/Volumes/KINGSTON/DGE_out/"
 
 # load in eXpress output files
@@ -278,15 +279,15 @@ temp
 group
 
 # remove spike option
-# retreive the spike IDs generated using blast
-spikes <- scan("~/Google\ Drive/RNA_seq/Data/RKC_Assemblies/spike_transcript_IDs", what = "character")
+# use this if you have certain contaminating sequences you want to remove
+spikes <- scan("~/path/to/spike_seqIDs.txt", what = "character")
 # remove the spikes transcripts from the tables
 all_count <- all_count[!rownames(all_count) %in% spikes, ]
 all_fpkm <- all_fpkm[!rownames(all_fpkm) %in% spikes, ]
 
 # Get annotations
-# "trinotate_annotation_report.txt" is a Trinotate output excel file exported tab-delimited
-transcripts <- read.delim("/Users/scottfay/Dropbox/Red_King_Crab_Project/RKC_transcriptome_and_annotation/trinotate_annotation_report.txt")
+# "trinotate_annotation_report.txt" is a Trinotate output excel file exported in excel as tab-delimited txt
+transcripts <- read.delim("/path/to/trinotate_annotation_report.txt")
 
 ##########
 #
@@ -518,6 +519,7 @@ plot_interaction <- function(gene_data, plot_title, add_title) {
 #   gene_name: the "transcript_id" for your gene of interest
 #   annotation: the full trinotate annotation report as a data frame
 #   fpkm_table: the table of FPKM values 
+#   graph_title: a brief gene name you want to use for the graph
 #####
 
 GOI_data <- function(gene_name, annotation, fpkm_table, graph_title) {
