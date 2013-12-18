@@ -2,6 +2,7 @@
 
 # Scott Fay 
 # 2013 Oct 15
+# updated 4 Dec 2013
 
 # to install packages:
 # install.packages("ggplot2")
@@ -157,19 +158,28 @@ colnames(fit)
 #   lrt = glmLRT object of the comparison you're making
 #   annot = transcripts annotation data frame
 #   fdr = false discovery rate (default 0.05)
-#   critFC, a threshold fold change (default 0, i.e., all)
+#   critFC = a threshold fold change (default 2-fold)
+#   onlyAnnot = flag whether to save only annotated transcripts
+#
+# saves files:
+#   .pdf of the MA plot
+#   .csv file of topTags, filtered by critical FC and onlyAnnot flag
+#   
 #####
 
-get_DEGs <- function(lrt, annot, fdr=0.05, critFC=0, onlyAnnot=FALSE) {
-  DEG <- summary(decideTestsDGE(lrt, p=fdr, adjust="BH")) # gives numbers of genes at FDR < pval
-  Num_DEG <- (DEG[1] + DEG[-1])[2] # number of DEG based on fdr
-  tTags <- topTags(lrt, n=Num_DEG) # get list of DEGs, "topTags"
-  cat("Comparison:", tTags$comparison, "\n")
+
+get_DEGs <- function(lrt, annot, fdr=0.05, critFC=2, onlyAnnot=FALSE) {
+  DEG <- summary(decideTestsDGE(lrt, p=fdr, adjust="BH")) # gives numbers of genes up and downregulated at FDR < pval
+  Num_DEG <- (DEG[1] + DEG[-1])[2] # gets total number of DEGs based on the FDR
+  tTags <- topTags(lrt, n=Num_DEG) # gets a list of DEGs, "topTags"
+  cp <- unlist(strsplit(tTags$comparison, "[* ]"))
+  comp <- paste(cp[2], "v", cp[4], sep="") # this and the preceding line make a cleaner text format for the "comparison," used in filenames
+  cat("Comparison:", comp, "\n")
   cat("Total number of genes:", nrow(lrt$table), "\n")
   cat("Number of differentially expressed genes with FDR <", fdr, "=", nrow(tTags), "\n")
-  DEG
-  cat("...saving an MAplot:", paste(out_dir,"MAplot_", tTags$comparison, "_FDR_", fdr, ".pdf", sep=""), "\n" )
-  pdf(file=paste(out_dir,"MAplot_", tTags$comparison, "_FDR_", fdr, ".pdf", sep=""), height=6, width=6)
+  # write an MA Plot .pdf
+  cat("...saving an MAplot:", paste(out_dir,"MAplot_", comp, "_FDR_", fdr, ".pdf", sep=""), "\n" )
+  pdf(file=paste(out_dir,"MAplot_", comp, "_FDR_", fdr, ".pdf", sep=""), height=6, width=6)
   detags <- rownames(tTags$table) # n= has to be the number of significantly differentially expressed genes
   plotSmear(lrt,de.tags=detags, cex=0.5) # plot of fold change given CPM, red for those < FDR
   abline(h=c(-1,1), col="dodgerblue") # blue line at twofold change
@@ -178,41 +188,45 @@ get_DEGs <- function(lrt, annot, fdr=0.05, critFC=0, onlyAnnot=FALSE) {
   tTags_frame <- tTags$table # make data frame from tTags
   tTags_frame$transcript_id <- rownames(tTags_frame)
   join <- merge(tTags_frame, annot) # gets the intersection of detags and transcripts, i.e., the annotations for the DE transcripts
+  # Some summary stats
   cat("percent all transcripts with ORFs:", sum(annot$prot_id != ".") * 100 / nrow(annot), "\n")
   cat("percent toptags with ORFs:", sum(join$prot_id != ".") * 100 / nrow(join), "\n")
   cat("percent all transcripts with Pfam or BlastX or BlastP annotation:", sum((annot$Pfam != ".") | (annot$Top_BLASTX_hit != ".") | (annot$Top_BLASTP_hit != ".")) * 100 / nrow(annot), "\n")
   cat("percent toptags with Pfam or BlastX or BlastP annotation:", sum((join$Pfam != ".") | (join$Top_BLASTP_hit != ".") | (join$Top_BLASTX_hit != ".")) * 100 / nrow(join), "\n")
-  cat("number of genes upregulated, (FC > 2):", sum(join$logFC > 1), "\n")
-  cat("number of genes downregulated, (FC < 0.5):", sum(join$logFC < -1 ), "\n")
-  cat("...saving .csv file with all topTags:", paste( out_dir, "topTags_", tTags$comparison, "_", fdr, "_FDR.csv", sep="" ), "\n" )
-  write.csv( join, file=paste(out_dir, "topTags_", tTags$comparison, "_", fdr, "_FDR.csv", sep="" ) )
-  cat("...saving .csv file with pFam OR TopBlastX/P-Hit annotated topTags:", paste(out_dir, "topTags_", tTags$comparison, "_", fdr, "_FDR_only_w_annot.csv", sep=""), "\n" )
-  # filter based on the threshold fold change, critFC
-  join <- join[ abs(join$logFC) > sqrt(critFC) , ]
+  cat("number of genes upregulated, (FC > ", critFC, "):", sum(join$logFC > log2(critFC)), "\n")
+  cat("number of genes downregulated, (FC < ", 1/critFC, "):", sum(join$logFC < -log2(critFC)), "\n")
+  join <- join[ abs(join$logFC) > log2(critFC) , ]
   # write a csv and return the relevant dataframe
   if(onlyAnnot) {
-    cat("saving with only annot")
-    write.csv( join[ (join$Pfam != ".") | (join$Top_BLASTX_hit != ".") | (join$Top_BLASTP_hit != ".") , ], file=paste(out_dir, "topTags_", tTags$comparison, "_", fdr, "_FDR_only_w_Annot.csv", sep="" ) )
+    cat("saving .csv of up or downregulated genes, given critical FC, with only annotated sequences:", paste(out_dir, "topTags_", comp, "_", "critFC", critFC, "_", fdr, "FDR_only_w_Annot.csv", sep="" ))
+    write.csv( join[ (join$Pfam != ".") | (join$Top_BLASTX_hit != ".") | (join$Top_BLASTP_hit != ".") , ], file=paste(out_dir, "topTags_", comp, "_", "critFC", critFC, "_", fdr, "FDR_only_w_Annot.csv", sep="" ) )
     return(join[ (join$Pfam != ".") | (join$Top_BLASTX_hit != ".") | (join$Top_BLASTP_hit != ".") , ])
   } else {
-    cat("saving toptags")
-    write.csv( join, file=paste(out_dir, "topTags_", tTags$comparison, "_", fdr, "_FDR.csv", sep="" ) )
+    cat("saving .csv of up/downregulated genes, given a critical FC:", paste(out_dir, "topTags_", comp, "_", "critFC", critFC, "_", fdr, "FDR.csv", sep="" ))
+    write.csv( join, file=paste(out_dir, "topTags_", comp, "_", "critFC", critFC, "_", fdr, "FDR.csv", sep="" ) )
     return(join)    
   }
 }
 
 # perform the desired LRT based on what comparison/contrast you want to make
-# Pt_15vs30 <- glmLRT(fit, coef=1)
 Pt_15vs30 <- glmLRT(fit, contrast=c(-1,0,0,1))
+Pt_15vs25 <- glmLRT(fit, contrast=c(-1,0,1,0))
+Pt_15vs20 <- glmLRT(fit, contrast=c(-1,1,0,0))
+Pt_20vs30 <- glmLRT(fit, contrast=c(0,-1,0,1))
+Pt_20vs25 <- glmLRT(fit, contrast=c(0,-1,1,0))
+Pt_25vs30 <- glmLRT(fit, contrast=c(0,0,-1,1))
 
 # call the get_DEGs() function for the relevant comparison made above, using the LRT fit as generated above...
-xxDEGlist_Pt_15vs30_annot_FC_10 <- get_DEGs(Pt_15vs30, annot=transcripts, fdr=0.00001, critFC=10, onlyAnnot=TRUE)
+DEGlist_Pt_15vs30_FC_4 <- get_DEGs(Pt_15vs30, annot=transcripts, fdr=0.05, critFC=4)
+DEGlist_Pt_15vs25_FC_4 <- get_DEGs(Pt_15vs25, annot=transcripts, fdr=0.05, critFC=4)
+DEGlist_Pt_15vs20_FC_4 <- get_DEGs(Pt_15vs20, annot=transcripts, fdr=0.05, critFC=4)
+DEGlist_Pt_20vs30_FC_4 <- get_DEGs(Pt_20vs30, annot=transcripts, fdr=0.05, critFC=4)
+DEGlist_Pt_20vs25_FC_4 <- get_DEGs(Pt_20vs25, annot=transcripts, fdr=0.05, critFC=4)
+DEGlist_Pt_25vs30_FC_4 <- get_DEGs(Pt_25vs30, annot=transcripts, fdr=0.05, critFC=4)
+
 
 # sort by logFC
 #sorted_tags <- DEGlist_Pt_15vs30[with(DEGlist_Pt_15vs30, order(logFC)), ]
-
-# write a .csv based on a threshold FC, in this case, ( FC < 0.25 ) and ( FC > 4 )
-write.csv(DEGlist_Pt_15vs30[ abs(DEGlist_Pt_15vs30$logFC) > 2 , ], file=paste( out_dir, "topTags_DEGlist_15vs30_FDR0_00001_PfamHits_logFC_greater_than_2.csv", sep="" ))
 
 #####
 # Function: deg_heatmap
