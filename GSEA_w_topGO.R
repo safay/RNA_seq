@@ -9,18 +9,32 @@
 # biocLite("topGO")
 # biocLite("Rgraphviz")
 
-# set a character vector as a description of the experiment
+#####
+# user-defined variables
+#####
+
+# a description of the experiment
 expDescription <- "Calineuria thermal stress experiment"
-# working directory with your topTags .CSVs from the DGE script
+# working directory with topTags .CSVs created by xprs_2_edgeR.R DGE script
 setwd("/Users/Shared/BigCB_Insect_Project/Cali_project/Cali_DGE/")
+# creates a vector of those DGE output files
+tTag_output <- list.files()
+tTag_output <- tTag_output[grepl("topTags.*csv", tTag_output)] # handy little grepl() function!
+# annotation filename and path, tab-delimited file of Trinotate output, generated in MS Excel
+annotFile <- "/Users/scottfay/annotation/Calineuria/trinotate_annotation_report.txt"
+# number of enriched Gene Ontogeny terms to report
+numNodes = 40
+# where to put the output file
 out_dir <- "/Users/Shared/BigCB_Insect_Project/Cali_project/Cali_DGE/"
+# name of the output file
+out_file <- "GSEA_Calineuria.txt"
+
 
 #####
 # Make full GO list from Trinotate-annotated transcriptome
 #####
-
-# get full GO list from transcriptome, a tab-delimited file of Trinotate output, saved in Excel, then processed with the perl one-liner above
-annot <- read.delim("/Users/scottfay/annotation/Calineuria/trinotate_annotation_report.txt")
+# get annotation file
+annot <- read.delim(annotFile)
 # create a list of GO terms
 GO_list <- as.list(as.character(annot[['transcript_id']])) # generates list; element names are transcript IDs
 GO_list <- as.list(setNames(as.character(annot$gene_ontology), as.character(annot$transcript_id))) # adds Gene Ontology data to list
@@ -31,7 +45,7 @@ geneID2GO <- GO_list
 geneNames <- names(GO_list)
 
 # view first 50 elements
-head(GO_list, 50) 
+# head(GO_list, 50) 
 
 #splitGOs <- lapply(GO_list, function(x) unlist(strsplit(x, split='\\`'))) # split GO terms string into a character vector, one element per term
 #splitGOs_IDonly <- lapply(splitGOs, function(x) substr(x, 1, 10)) # gets just GO ID number for each element
@@ -41,10 +55,13 @@ head(GO_list, 50)
 # Iterate over all of the topTags result files
 #####
 
-# creates a vector of the DGE output files, "tTag_output"
-tTag_output <- list.files()
-tTag_output <- tTag_output[grepl("topTags.*csv", tTag_output)] # handy little grepl() function!
+# creates the GSEA output file
+print("writing output to:")
+print(paste(out_dir, out_file, sep=""))
+con <- file(paste(out_dir, out_file, sep=""))
+sink(con, type = c("output", "message"), split = TRUE)
 
+# iterates over the topTags files, performing GSEA test
 for (filename in tTag_output) {
   print("getting file: ")
   print(paste(getwd(), "/", filename, sep=""))
@@ -72,7 +89,7 @@ for (filename in tTag_output) {
     test.stat <- new("classicCount", testStatistic = GOFisherTest, name = "Fisher test")
     resultFisher <- getSigGroups(GOdata, test.stat)
     print(resultFisher)  
-    allRes <- GenTable(GOdata, classic = resultFisher, topNodes = 40)
+    allRes <- GenTable(GOdata, classic = resultFisher, topNodes = numNodes)
     print(allRes)
     # Bonferroni correction is simply p-value divided by number of comparisons, in this case, the number of GO terms tested, x in the output where "the algorithm is scoring x nontrivial nodes"
     # build a graph
@@ -80,5 +97,7 @@ for (filename in tTag_output) {
   }
 }
 
-
-
+# restores output sink and closes connection to the output file
+sink() 
+sink(type = c("output", "message"))
+rm(con)
