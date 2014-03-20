@@ -29,8 +29,6 @@
 # scott.a.fay <at> gmail dot com
 # 5 December 2012
 
-
-
 # load required libraries
 library(Biostrings)
 library(ggplot2)

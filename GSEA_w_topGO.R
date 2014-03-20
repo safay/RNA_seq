@@ -100,4 +100,4 @@ for (filename in tTag_output) {
 # restores output sink and closes connection to the output file
 sink() 
 sink(type = c("output", "message"))
-rm(con)
+close(con)
