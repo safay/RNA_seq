@@ -11,18 +11,15 @@ This makes a plot of sequence length distributions, comparing multiple files, in
 
 ---
 
-xprs_2_edgeR.R
+get_express_data.R 
 
-This is designed to do a series of analyses to explore differential gene expression from an RNA-seq dataset, particularly RNA-seq data from non-model organisms with only a de-novo assembly.  It needs two kinds of files as input: 
+Gets eXpress expression estimate data for subequent use in R.
 
-1) a set of xprs.results files from eXpress, one from each library (http://bio.math.berkeley.edu/eXpress/overview.html) 
+---
 
-2) an annotation file from Trinotate (http://trinotate.sourceforge.net/).  
+get_DEG_list.R
 
-See the EdgeR documentation for more details:
-http://www.bioconductor.org/packages/2.13/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf
-
-This is currently meant to be used interactively in an IDE such as R Studio.
+Generates a list of differentially expressed genes, using the R object created by get_express_data.R  This is currently meant to be used interactively in an IDE such as R Studio.
 
 --
 

@@ -1,0 +1,258 @@
+#!/usr/bin/R
+
+# Scott Fay 
+# 2013 Oct 15
+# updated 4 Dec 2013
+
+# to install packages:
+#install.packages("ggplot2")
+#source("http://bioconductor.org/biocLite.R")
+# biocLite()
+#biocLite("edgeR")
+
+library(ggplot2)
+library(edgeR)
+library(RColorBrewer)
+
+# set output directory
+out_dir <- "/Users/Shared/BigCB_Insect_Project/Ptero_DGE/"
+setwd("/Users/Shared/BigCB_Insect_Project/Ptero_DGE/")
+
+# get annotation file
+# "trinotate_annotation_report.txt" is a Trinotate output excel file, exported as tab-delimited
+transcripts <- read.delim("/Users/Shared/BigCB_Insect_Project/Ptero_DGE/trinotate_annotation_report.txt")
+
+# define groups
+group <- read.delim("Ptero_groups.txt")
+
+# load count data
+load("counts.RData")
+head(all_count)
+
+##########
+#
+# Set up differential gene expression (DGE) analysis, generate summary plots:
+#   define a model matrix *
+#   estimate dispersion
+#   make a plot of biological coefficient of variation vs. log(CPM)
+#   make a multidimensional scaling plot of total counts
+#   fit GLM for each transcript
+#     * Note, how to define the statistical model is completely dependent on your experimental design and what question(s) you want to address.  See the EdgeR documentation as a first-pass guide: http://www.bioconductor.org/packages/2.12/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf
+#
+##########
+
+# DGEList makes an EdgeR object
+y <- DGEList(counts=all_count, group=group)
+
+# define the statistical model, a design matrix using the model.matrix function
+design <- model.matrix(~0+group, data=y$samples)
+colnames(design) <- levels(y$samples$group)
+colnames(design)
+design
+
+#####
+#
+# Plot total number of mapped reads to each transcript: look for outliers of library size
+#
+#####
+
+colors <- brewer.pal(9, "Set1")
+boxplot(log2(all_count+1), las=2) # before filter
+boxplot(log2(filtered.all.count+1), las=2) # after filter
+
+
+# filter out transcripts that do not have at least two reads out of 1,000,000 reads mapped in at least 4 samples
+y <- y[rowSums(1e+06 * y$counts/expandAsMatrix(y$samples$lib.size, dim(y)) > 2) >= 4, ]
+
+# reset the library sizes after filtering
+y$samples$lib.size <- colSums(y$counts)
+# TMM normalization compensates not just for library size but also the relative expression level among transcripts
+y <- calcNormFactors(y)
+# estimate dispersion for GLM fit, common, trended, and tagwise
+# see edgeR docs for references on dispersion estimates, e.g., "?estimateGLMCommonDisp"
+y <- estimateGLMCommonDisp(y,design) 
+# estimate trended dispersion for use in tagwise dispersion estimate
+y <- estimateGLMTrendedDisp(y,design)
+# estimate tagwise dispersion to be used in glmFit()
+y <- estimateGLMTagwiseDisp(y,design)
+# plot genewise biological coefficient of variation against gene abundance
+plotBCV(y)
+# make plot as a pdf
+pdf(file="BCV_plot.pdf", height=6, width=6)
+plotBCV(y, main = "Biological Coefficient of Variation")
+dev.off()
+# MDS plot
+plotMDS(y , main = "MDS Plot for Count Data", labels = colnames( y$counts ), cex=0.7)
+# make a pdf
+pdf(file="MDS_plot.pdf", height=6, width=6)
+plotMDS(y , main = "MDS Plot for Count Data", labels = colnames( y$counts ), cex=0.7)
+dev.off()
+
+# GLM
+# fit the negative binomial generalized linear model (GLM) for each tag, creating a new fit object
+fit <- glmFit(y, design)
+colnames(fit)
+
+#####
+#
+# Find significantly differentially expressed genes between comparisons
+#
+#####
+
+#####
+# Function: get_DEGs
+# perform LRT (likelihood ratio test) on certain factors
+# returns a data frame that contains both toptags and annotation data
+# arguments:
+#   lrt = glmLRT object of the comparison you're making
+#   annot = transcripts annotation data frame
+#   fdr = false discovery rate (default 0.05)
+#   critFC = a threshold fold change (default 2-fold)
+#   onlyAnnot = flag whether to save only annotated transcripts
+#
+# saves files:
+#   .pdf of the MA plot
+#   .csv file of topTags, filtered by critical FC and onlyAnnot flag
+#   
+#####
+
+get_DEGs <- function(lrt, annot, fdr=0.05, critFC=2, onlyAnnot=FALSE) {
+  DEG <- summary(decideTestsDGE(lrt, p=fdr, adjust="BH")) # gives numbers of genes up and downregulated at FDR < pval
+  Num_DEG <- (DEG[1] + DEG[-1])[2] # gets total number of DEGs based on the FDR
+  tTags <- topTags(lrt, n=Num_DEG) # gets a list of DEGs, "topTags"
+  cp <- unlist(strsplit(tTags$comparison, "[* ]"))
+  comp <- paste(cp[2], "v", cp[4], sep="") # this and the preceding line make a cleaner text format for the "comparison," used in filenames
+  cat("Comparison:", comp, "\n")
+  cat("Total number of genes:", nrow(lrt$table), "\n")
+  cat("Number of differentially expressed genes with FDR <", fdr, "=", nrow(tTags), "\n")
+  # write an MA Plot .pdf
+  cat("...saving an MAplot:", paste(out_dir,"MAplot_", comp, "_FDR_", fdr, ".pdf", sep=""), "\n" )
+  pdf(file=paste(out_dir,"MAplot_", comp, "_FDR_", fdr, ".pdf", sep=""), height=6, width=6)
+  detags <- rownames(tTags$table) # n= has to be the number of significantly differentially expressed genes
+  plotSmear(lrt,de.tags=detags, cex=0.5) # plot of fold change given CPM, red for those < FDR
+  abline(h=c(-1,1), col="dodgerblue") # blue line at twofold change
+  dev.off()
+  # Merge annotations with DGE stats
+  tTags_frame <- tTags$table # make data frame from tTags
+  tTags_frame$transcript_id <- rownames(tTags_frame)
+  join <- merge(tTags_frame, annot) # gets the intersection of detags and transcripts, i.e., the annotations for the DE transcripts
+  # Some summary stats
+  cat("percent all transcripts with ORFs:", sum(annot$prot_id != ".") * 100 / nrow(annot), "\n")
+  cat("percent toptags with ORFs:", sum(join$prot_id != ".") * 100 / nrow(join), "\n")
+  cat("percent all transcripts with Pfam or BlastX or BlastP annotation:", sum((annot$Pfam != ".") | (annot$Top_BLASTX_hit != ".") | (annot$Top_BLASTP_hit != ".")) * 100 / nrow(annot), "\n")
+  cat("percent toptags with Pfam or BlastX or BlastP annotation:", sum((join$Pfam != ".") | (join$Top_BLASTP_hit != ".") | (join$Top_BLASTX_hit != ".")) * 100 / nrow(join), "\n")
+  cat("number of genes upregulated, (FC > ", critFC, "):", sum(join$logFC > log2(critFC)), "\n")
+  cat("number of genes downregulated, (FC < ", 1/critFC, "):", sum(join$logFC < -log2(critFC)), "\n")
+  join <- join[ abs(join$logFC) > log2(critFC) , ]
+  # write a csv and return the relevant dataframe
+  if(onlyAnnot) {
+    cat("saving .csv of up or downregulated genes, given critical FC, with only annotated sequences:", paste(out_dir, "topTags_", comp, "_", "critFC", critFC, "_", fdr, "FDR_only_w_Annot.csv", sep="" ))
+    write.csv( join[ (join$Pfam != ".") | (join$Top_BLASTX_hit != ".") | (join$Top_BLASTP_hit != ".") , ], file=paste(out_dir, "topTags_", comp, "_", "critFC", critFC, "_", fdr, "FDR_only_w_Annot.csv", sep="" ) )
+    return(join[ (join$Pfam != ".") | (join$Top_BLASTX_hit != ".") | (join$Top_BLASTP_hit != ".") , ])
+  } else {
+    cat("saving .csv of up/downregulated genes, given a critical FC:", paste(out_dir, "topTags_", comp, "_", "critFC", critFC, "_", fdr, "FDR.csv", sep="" ))
+    write.csv( join, file=paste(out_dir, "topTags_", comp, "_", "critFC", critFC, "_", fdr, "FDR.csv", sep="" ) )
+    return(join)    
+  }
+}
+
+# perform the desired LRT based on what comparison/contrast you want to make
+Pt_15vs30 <- glmLRT(fit, contrast=c(-1,0,0,1))
+Pt_15vs25 <- glmLRT(fit, contrast=c(-1,0,1,0))
+Pt_15vs20 <- glmLRT(fit, contrast=c(-1,1,0,0))
+Pt_20vs30 <- glmLRT(fit, contrast=c(0,-1,0,1))
+Pt_20vs25 <- glmLRT(fit, contrast=c(0,-1,1,0))
+Pt_25vs30 <- glmLRT(fit, contrast=c(0,0,-1,1))
+
+# call the get_DEGs() function for the relevant comparison made above, using the LRT fit as generated above...
+DEGlist_Pt_15vs30_FC_4 <- get_DEGs(Pt_15vs30, annot=transcripts, fdr=0.05, critFC=4)
+DEGlist_Pt_15vs25_FC_4 <- get_DEGs(Pt_15vs25, annot=transcripts, fdr=0.05, critFC=4)
+DEGlist_Pt_15vs20_FC_4 <- get_DEGs(Pt_15vs20, annot=transcripts, fdr=0.05, critFC=4)
+DEGlist_Pt_20vs30_FC_4 <- get_DEGs(Pt_20vs30, annot=transcripts, fdr=0.05, critFC=4)
+DEGlist_Pt_20vs25_FC_4 <- get_DEGs(Pt_20vs25, annot=transcripts, fdr=0.05, critFC=4)
+DEGlist_Pt_25vs30_FC_4 <- get_DEGs(Pt_25vs30, annot=transcripts, fdr=0.05, critFC=4)
+
+
+# sort by logFC
+#sorted_tags <- DEGlist_Pt_15vs30[with(DEGlist_Pt_15vs30, order(logFC)), ]
+
+#####
+# Function: deg_heatmap
+#   fpkm_frame, the dataframe made above, "all_fpkm"
+#   tTagList, a list yeilded from the get_DGEs function
+#   crit_mean_fpkm, critical value for filtering out rows based on mean FPKM across all samples.  Default = 0, i.e., all samples.
+#####
+
+DEG_heatmap <- function(fpkm_frame, tTagList, crit_mean_fpkm = 0) {
+  filtered_fpkm_frame <- fpkm_frame[ ( apply(fpkm_frame, 1, mean) > crit_mean_fpkm ) , ]  # filter fpkm_frame by rows above a critical mean fpkm value, crit_mean_fpkm
+  # reorder by pH:
+  filtered_fpkm_frame <- filtered_fpkm_frame[c("C1_fpkm", "C2_fpkm", "C3_fpkm", "C4_fpkm", "C5_fpkm", "A4_fpkm", "A5_fpkm", "A6_fpkm", "A7_fpkm", "A8_fpkm", "F1_fpkm", "F2_fpkm", "F3_fpkm", "F4_fpkm", "F5_fpkm", "J1_fpkm", "J2_fpkm", "J3_fpkm", "J4_fpkm", "J5_fpkm", "E1_fpkm", "E2_fpkm", "E3_fpkm", "E4_fpkm", "E5_fpkm", "G1_fpkm", "G2_fpkm", "G3_fpkm", "G4_fpkm", "G5_fpkm", "B4_fpkm", "B5_fpkm", "B6_fpkm", "B7_fpkm", "B8_fpkm", "H1_fpkm", "H2_fpkm", "H3_fpkm", "H4_fpkm", "H5_fpkm", "D1_fpkm", "D2_fpkm", "D3_fpkm", "D4_fpkm", "D5_fpkm" ) ]
+  fpkm_matrix <- data.matrix(filtered_fpkm_frame[ ( rownames(filtered_fpkm_frame) %in% tTagList$transcript_id ) ,  ]) # make matrix of only those transcripts found in tTagList
+  n=256
+  heatmap(fpkm_matrix, Colv=NA, col = rainbow(n, s = 1, v = 1, start = 0, end = max(1,n - 1)/n, alpha = 1), scale="column", margins=c(5,10), cexRow = 0.5, cexCol = 0.7)
+}
+
+# Example usage: 
+DEG_heatmap(all_fpkm, DEGlist_no_interaction_pHlow)
+DEG_heatmap(all_fpkm, DEGlist_no_interaction_pHlow, 100)
+
+
+#####
+#
+# Clustering and heatmap
+#
+#####
+
+# Adapted from Trinity differential gene expression analysis found here:
+# http://trinityrnaseq.sourceforge.net/analysis/diff_expression_analysis.html
+# from analyze_diff_expr.pl
+
+library(cluster)
+library(gplots)
+library(Biobase)
+
+outfile_prefix <- "outfile"
+
+tTagList <- FC_10_Pt_15vs30
+
+# define number of clusters
+k = 16
+
+data <- data.matrix(all_fpkm[(rownames(all_fpkm) %in% tTagList$transcript_id),]) # make matrix of fpkm values using only those transcripts found in tTagList
+
+## generate correlation matrix
+cr = cor(data, method='spearman')
+## log2 transform, mean center rows
+data = log2(data+1)
+centered_data = t(scale(t(data), scale=F)) # center rows, mean substracted
+hc_genes = agnes(centered_data, diss=FALSE, metric="euclidean") # cluster genes
+hc_samples = hclust(as.dist(1-cor(centered_data, method="spearman")), method="complete") # cluster conditions
+myheatcol = redgreen(75)
+gene_partition_assignments <- cutree(as.hclust(hc_genes), k=k)
+partition_colors = rainbow(length(unique(gene_partition_assignments)), start=0.4, end=0.95)
+gene_colors = partition_colors[gene_partition_assignments]
+#postscript(file=paste(out_dir,"diff_expr_matrix_file.heatmap.eps",sep=""), horizontal=FALSE, width=18, height=8, paper="special")
+heatmap.2(centered_data, dendrogram="both", Rowv=as.dendrogram(hc_genes), Colv=as.dendrogram(hc_samples), col=myheatcol, RowSideColors=gene_colors, scale="none", density.info="none", trace="none", key=TRUE, keysize=1.2, cexCol=2.5, margins=c(15,15), lhei=c(0.3,2), lwid=c(2.5,4))
+#dev.off()
+
+# prep for clustering
+max_cluster_count = max(gene_partition_assignments)
+gene_names = rownames(data)
+num_cols = length(data[1,])
+
+# partition data into subclusters, print plots
+for (i in 1:max_cluster_count) {
+  partition_i = (gene_partition_assignments == i)
+  partition_data = centered_data[partition_i,]
+  # if the partition involves only one row, then it returns a vector instead of a table\n";
+  if (sum(partition_i) == 1) {
+    dim(partition_data) = c(1,num_cols)
+    colnames(partition_data) = colnames(centered_data)
+    rownames(partition_data) = gene_names[partition_i]
+  }
+  assign(paste("subcluster_", i, sep=""), as.data.frame(partition_data))
+  cluster_data <- as.data.frame(partition_data)
+  cluster_fpkm_means <- rbind(data.frame(temp='15C', mean_fpkm=apply(cluster_data[,1:5], 1, mean), gene_id=rownames(cluster_data)), data.frame(temp='20C', mean_fpkm=apply(cluster_data[,6:10], 1, mean), gene_id=rownames(cluster_data)), data.frame(temp='25C', mean_fpkm=apply(cluster_data[,11:15], 1, mean), gene_id=rownames(cluster_data)), data.frame(temp='30C', mean_fpkm=apply(cluster_data[,16:20], 1, mean), gene_id=rownames(cluster_data)))
+#  p <- ggplot(cluster_fpkm_means, aes(x=temp, y=mean_fpkm, group=gene_id))
+  print(ggplot(cluster_fpkm_means, aes(x=temp, y=mean_fpkm, group=gene_id)) + geom_line(color=partition_colors[i],size=1, alpha=0.2) + geom_point(size = 3, alpha = 0.2) + theme_bw(base_size = 24) + ggtitle(NULL)) # + ggtitle(paste("Cluster_", i, sep="")) + ylab("median-centered log2(FPKM+1)") ))
+}
