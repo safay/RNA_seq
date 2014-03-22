@@ -3,19 +3,19 @@ RNA_seq
 
 Scripts related to RNA sequencing, transcriptomics, and analysis of differential gene expression
 
----
+--
 
 plotSeqLengthDist.R
 
 This makes a plot of sequence length distributions, comparing multiple files, initially built to compare the output from different de novo assemblies of transcriptomes.  See the script header for usage.
 
----
+--
 
 get_express_data.R 
 
 Gets eXpress expression estimate data for subequent use in R.
 
----
+--
 
 get_DEG_list.R
 
