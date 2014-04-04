@@ -1,0 +1,73 @@
+#!/bin/bash
+
+# script to estimate gene expression for a set of flash-joined illumina reads
+# and a reference transcriptome
+# using bowtie2, samtools, and express
+# Scott Fay --- 27 Aug 2013, last updated 4 Apr 2014
+
+# be sure to make this executable
+
+#####
+#
+# Modify these three commands to suit your analysis
+#
+#####
+
+# directory containing libraries
+cd $SCRATCH/libraryDirectory
+# transcriptome file
+tome=/path/to/transcriptome_filename_Trinity.fasta
+# How many processors should bowtie2 and express use for each library?  
+# Remember to give enough processors to the job (via the PBS script) 
+#  to cover the number of libraries times this number of cpus...
+cpu=2
+
+
+
+#####
+# Begin analysis: bowtie2 mapping
+#####
+
+# build a bowtie index with the transcriptome
+bowtie2-build --offrate 1 $tome Trinity_index
+
+# set an index variable
+j=0
+
+# map reads, iterating over each of the libraries
+for lib in *notCombined_1.fastq
+do
+# -a # report all alignments (multi-mapping)
+# -I 50 # minimum fragment length
+# -X 600 # max fragment length 
+# -p 2 # number of CPUs
+# -x ... # The Bowtie2 index prefix from above
+# -1 ... -2 ... -U ... # The left, right, and unpaired reads
+# samtools view -Sb # translates a .sam file to a .bam file
+echo 'mapping reads for: ' ${lib/notCombined_1.fastq/}
+dplace -c $j bowtie2 -a -I 50 -X 600 -p $cpu -x ./Trinity_index -1 $lib -2 ${lib/_1./_2.} -U ${lib/notCombined_1/extendedFrags} | samtools view -Sb - > ${lib/.notCombined_1.fastq/}_hits.bam &
+let "j = j + $cpu" 
+done
+
+# wait for all background processes to finish
+wait
+
+#####
+# Run eXpress
+#####
+
+# set an index variable
+i=0
+
+# loop over the .bam files, estimating expression
+for bamfile in *.bam
+do
+echo 'saving express output in' ${bamfile/hits.bam/xprs_out}
+# run eXpress in the background
+dplace -c $i express -o ${bamfile/hits.bam/xprs_out} $tome $bamfile & 
+# increment the index
+let "i = i + $cpu" 
+done
+
+# wait for all background processes to finish
+wait

@@ -1,0 +1,58 @@
+#!/bin/csh
+#PBS -l ncpus=32
+#ncpus must be a multiple of 16
+#PBS -l walltime=40:00:00
+#40h of walltime
+#PBS -j oe
+#PBS -q batch
+#PBS -m abe
+#PBS -M stillmaj@sfsu.edu
+#PBS -o /brashear/jstillma/trinity_prep_RKC5_03.pbslog
+
+set echo
+
+# turn on job accounting
+ja
+
+# needed for the "module" command
+source /usr/share/modules/init/csh
+
+# the directory with all the files
+cd $SCRATCH/RKC5/FASTA
+
+# make a new directory to hold the merged files
+#mkdir -p trinity_in  #removed from _02
+# merge all reads into three files:
+#   left “R1” reads
+#   right “R2” reads
+#   flash-joined “extendedFrags” reads
+# by using cat: all the left, right, and joined reads respectively
+#cat *.notCombined_1.fastq > ./trinity_in/all_left_reads.fq  #removed next 3 lines from _02
+#cat *.notCombined_2.fastq > ./trinity_in/all_right_reads.fq
+#cat *extendedFrags.fastq > ./trinity_in/all_joined_reads.fq
+
+# change into the directory with merged reads
+cd $SCRATCH/RKC5/FASTA/trinity_in
+
+# load trinity module
+module load trinity/r2013-11-10
+
+# normalize paired reads
+/usr/local/packages/trinity/r2013-11-10/util/normalize_by_kmer_coverage.pl --seqType fq --JM 200
+G --max_cov 30 --left ./all_left_reads.fq --right ./all_right_reads.fq --pairs_together --JELLY_
+CPU 32 --PARALLEL_STATS --output ./normalized_paired
+
+# normalize joined reads
+/usr/local/packages/trinity/r2013-11-10/util/normalize_by_kmer_coverage.pl --seqType fq --JM 200
+G --max_cov 30 --single ./all_joined_reads.fq --JELLY_CPU 32 --output ./normalized_single
+
+# add the FLASH-joined reads to the left reads into a new file, merged reads
+cat all_left_reads.fq.normalized_K25_C30_pctSD200.fq all_joined_reads.fq.normalized_K25_C30_pctS
+D200.fq > all_merged_reads.fq.normalized_K25_C30_pctSD200.fq
+
+# add /1 or /2 to the end of the seqIDs, for trinity
+sed -i 's_$_/1_;n;n;n' all_merged_reads.fq.normalized_K25_C30_pctSD200.fq
+sed -i 's_$_/2_;n;n;n' all_right_reads.fq.normalized_K25_C30_pctSD200.fq
+
+# job accounting end
+ja -chlst

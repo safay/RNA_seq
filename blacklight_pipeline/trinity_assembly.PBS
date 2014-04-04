@@ -1,0 +1,29 @@
+#!/bin/csh
+#PBS -l ncpus=48
+#ncpus must be a multiple of 16
+#PBS -l walltime=36:00:00
+#36 hours of walltime
+#PBS -j oe
+#PBS -q batch
+#PBS -m abe
+#PBS -M stillmaj@sfsu.edu
+#PBS -W group_list=mc3uv1p
+#PBS -o /brashear/jstillma/trinity_denovo_RKC5_03.pbslog
+set echo
+
+# needed for the "module" command
+source /usr/share/modules/init/csh
+
+# turn on job accounting
+ja
+
+module load trinity/r2013-11-10
+module load samtools
+
+cd /brashear/jstillma/RKC5/FASTA/trinity_in
+/usr/local/packages/trinity/r2013-11-10/Trinity.pl --seqType fq --JM 180G --bflyHeapSpaceMax 200
+G --bflyGCThreads 30 --min_kmer_cov 2 --output Trinity_output --CPU 48 --full_cleanup --left all
+_merged_reads.fq.normalized_K25_C30_pctSD200.fq --right all_right_reads.fq.normalized_K25_C30_pc
+tSD200.fq > trinity_output.log
+
+ja -chlst

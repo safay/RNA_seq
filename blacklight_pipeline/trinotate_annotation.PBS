@@ -1,0 +1,80 @@
+#!/bin/bash
+#PBS -N trinotate_pipe
+#PBS -l ncpus=48
+#ncpus must be a multiple of 16
+#PBS -l walltime=48:00:00
+#48 hours of walltime
+#PBS -j oe
+#PBS -q batch
+#PBS -m abe
+# change this to your email address
+#PBS -M your_email@domain.domain
+# change this to your group depending on which allocation you want to use
+#PBS -W group_list=yourgroup
+# change this path to your $SCRATCH directory and update the filename for each run
+#PBS -o /brashear/username/annot_0.pbslog
+
+# by Scott Fay
+# last edited 4 April 2014
+
+set -x
+
+### set $tome to the path and filename of the transcriptome to annotate
+tome="/brashear/username/path/to/your_Trinity.fasta"
+
+cd $(dirname $tome)
+
+# needed for "module" command
+source /usr/share/modules/init/bash
+
+# turn on job accounting
+ja
+
+### run transdecoder
+module load trinity
+$TRINITY_HOME/trinity-plugins/transdecoder/TransDecoder -t $tome
+
+### run analyses for trinotate
+module load trinotate
+# blastx
+dplace -c 0 blastx -query $tome -db $TRDB_SPROT -num_threads 16 -max_target_seqs 1 -outfmt 6 > blastx.outfmt6 &
+# blastp
+dplace -c 16 blastp -query best_candidates.eclipsed_orfs_removed.pep -db $TRDB_SPROT -num_threads 16 -max_target_seqs 1 -outfmt 6 > blastp.outfmt6 &
+# HMMER
+dplace -c 32 hmmscan --cpu 16 --domtblout TrinotatePFAM.out $TRDB_PFAM best_candidates.eclipsed_orfs_removed.pep > pfam.log &
+wait
+# signalp
+signalp -f short -n signalp.out best_candidates.eclipsed_orfs_removed.pep
+# TMHMM
+tmhmm --short < best_candidates.eclipsed_orfs_removed.pep > tmhmm.out
+
+### Make database of annotations
+# Copy the blank SQL database
+cp $TRDB_SQLITE ./Trinotate.sqlite
+# Generate gene/transcript relationships
+$TRINITY_HOME/util/get_Trinity_gene_to_trans_map.pl $tome >  Trinity.fasta.gene_trans_map
+# Initialize sqlite database
+Trinotate Trinotate.sqlite init --gene_trans_map Trinity.fasta.gene_trans_map --transcript_fasta $tome --transdecoder_pep best_candidates.eclipsed_orfs_removed.pep
+# Load protein hits
+Trinotate Trinotate.sqlite LOAD_blastp blastp.outfmt6
+# Load transcript hits
+Trinotate Trinotate.sqlite LOAD_blastx blastx.outfmt6
+# Load Pfam hits
+Trinotate Trinotate.sqlite LOAD_pfam TrinotatePFAM.out
+# Load transmembrane domains
+Trinotate Trinotate.sqlite LOAD_tmhmm tmhmm.out
+# Load signal peptides
+Trinotate Trinotate.sqlite LOAD_signalp signalp.out
+# Build trinotate report
+Trinotate Trinotate.sqlite report > trinotate_annotation_report.xls
+
+#-------------------------------------------------------------------
+#/usr/local/opt/modulefiles/trinotate_db/20130704:
+
+	#setenv TRDB_HOME /usr/local/packages/trinotate_db/20130704 
+	#setenv TRDB_SQLITE /usr/local/packages/trinotate_db/20130704/TrinotateSqlite.sprot.20130704.db 
+	#setenv TRDB_PFAM /usr/local/packages/trinotate_db/20130704/Pfam-A.hmm 
+	#setenv TRDB_SPROT /usr/local/packages/trinotate_db/20130704/uniprot_sprot.fasta 
+#-------------------------------------------------------------------
+
+ja -chlst

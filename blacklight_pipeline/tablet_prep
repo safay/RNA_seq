@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# script to prepare .bam files for viewing in tablet
+# Scott Fay --- 7 Aug 2013, updated 4 Apr 2014
+
+# directory containing .bam files
+cd /path/to/bam/files
+
+# iterate over .bam files to sort
+j=0  
+for bamfile in ./*hits.bam
+do
+dplace -c $j samtools sort $bamfile ${bamfile/.bam/_sorted} &
+let "j = j + 2" 
+done
+wait
+
+# use sorted files to make indices
+k=0  
+for bamfile in ./*hits.bam
+do
+dplace -c $k samtools index ${bamfile/.bam/_sorted.bam} &
+let "k = k + 2" 
+done
+wait

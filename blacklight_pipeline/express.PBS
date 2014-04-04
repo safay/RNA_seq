@@ -1,0 +1,26 @@
+#!/bin/csh
+#PBS -l ncpus=96
+#ncpus must be a multiple of 16
+#PBS -l walltime=96:00:00
+#thirty mins of walltime
+#PBS -j oe
+#PBS -q batch
+#PBS -m abe
+#PBS -M <your.email@some.domain>
+#PBS -W group_list=<group>
+#PBS -o <path and output_log filename>
+
+set echo
+
+# needed for the "module" command
+source /usr/share/modules/init/csh
+
+# turn on job accounting
+ja
+
+module load samtools/0.1.18
+
+# run the express script; set to the appropriate directory
+$HOME/scripts/bash/express_batch
+
+ja -chlst

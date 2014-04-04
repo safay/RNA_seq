@@ -1,0 +1,62 @@
+#!/bin/bash
+
+# script to generate scripts to filter sequences
+# assumes paired-end reads
+# that the files be named as *R1.fastq and *R2.fastq
+# Scott Fay - 27 Aug 2013
+# Updated 4 Apr 2014
+
+#####
+# user-set parameters
+#####
+
+# set the input directory
+in_dir=${SCRATCH}/input/path
+# set script directory and filename prefix; replace "replace_me" below:
+mkdir -p ${SCRATCH}/temp_scripts
+script=${SCRATCH}/temp_scripts/replace_me_filter_
+
+# remove old filter scripts
+rm ${script}*
+# an index for naming scripts
+i=0
+
+#####
+# generate the scripts
+#####
+
+# iterates over the (previously joined) files in input directory
+for left_reads in ${in_dir}/*_R1.fastq
+do
+
+    echo 'writing new script: ' ${script}${i}
+    echo 'to process file:' ${left_reads}
+    new_script=${script}${i}
+    touch ${new_script}
+    (( i++ ))
+    out_dir=${left_reads/_R1.fastq/}
+    echo
+
+# writing the script header...
+
+    echo '#!/bin/bash' >> ${new_script}
+    echo >> ${new_script}
+    echo 'cd' $in_dir >> ${new_script}
+
+# fastQC
+
+#    echo 'fastqc' ${left_reads} >> ${new_script}
+#    echo 'fastqc' ${left_reads/_R1/_R2} >> ${new_script}
+
+# Trim Galore!
+
+    echo 'trim_galore --paired --length 30 -t' $left_reads ${left_reads/_R1/_R2} >> ${new_script}
+
+# FLASH
+
+    echo 'flash --threads=2 -o' $(basename ${left_reads/_R1.fastq/}) ${left_reads/R1.fastq/R1_val_1.fq} ${left_reads/R1.fastq/R2_val_2.fq} >> ${new_script}
+
+done
+
+# make the scripts executable
+chmod 755 ${script}*
