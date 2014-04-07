@@ -16,7 +16,7 @@
 #  - Second argument is the path and filename to a "groups" file.
 # Saves output to the directory containing the "groups" file.
 #
-# An example groups file, with four factors, "mother", "pH", and "tissue."  
+# An example groups file, tab-delimited, with four factors, "mother", "pH", and "tissue."  
 # Sample IDs are in the order of the directories containing the express output.
 #
 # sample.ID  mother	pH	tissue
