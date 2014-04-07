@@ -13,12 +13,32 @@ library(cluster)
 library(gplots)
 library(Biobase)
 
+
+#####
+#
+# User-set paramaters
+#
+#####
+
 outfile_prefix <- "outfile"
 
-tTagList <- FC_10_Pt_15vs30
+# set working directory
+setwd("/Users/Shared/BigCB_Insect_Project/Dicosmo_project/Dicosmo_DGE")
+
+# get the data files produced by import_express_data.R
+load(file="diff_expression_data.RData")
+
+# get list of transcripts that we want to cluster and make a heatmap from
+targetList <- read.table("list_of_target_genes_for_heatmap.txt")
 
 # define number of clusters
 k = 16
+
+#####
+#
+# Generate clusters and heatmap
+#
+#####
 
 data <- data.matrix(all_fpkm[(rownames(all_fpkm) %in% tTagList$transcript_id),]) # make matrix of fpkm values using only those transcripts found in tTagList
 
