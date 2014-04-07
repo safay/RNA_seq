@@ -29,7 +29,7 @@ setwd("/Users/Shared/BigCB_Insect_Project/Dicosmo_project/Dicosmo_DGE")
 load(file="diff_expression_data.RData")
 
 # get list of transcripts that we want to cluster and make a heatmap from
-targetList <- read.table("list_of_target_genes_for_heatmap.txt")
+targetList <- read.table("list_of_target_genes_for_heatmap.txt", header=TRUE)
 
 # define number of clusters
 k = 16
@@ -40,7 +40,7 @@ k = 16
 #
 #####
 
-data <- data.matrix(all_fpkm[(rownames(all_fpkm) %in% tTagList$transcript_id),]) # make matrix of fpkm values using only those transcripts found in tTagList
+data <- data.matrix(all_fpkm[(rownames(all_fpkm) %in% targetList$transcript_id),]) # make matrix of fpkm values using only those transcripts found in targetList
 
 ## generate correlation matrix
 cr = cor(data, method='spearman')
