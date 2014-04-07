@@ -154,6 +154,4 @@ colnames(all_count) <- group$sample
 colnames(all_fpkm) <- group$sample
 
 #save the two new dataframes
-save(all_count, file = paste(out_dir, "/counts.RData", sep=""))
-save(all_fpkm, file = paste(out_dir, "/fpkm.RData", sep=""))
-save(group, file = paste(out_dir, "/groups.RData", sep=""))
+save(all_count, all_fpkm, group, file = paste(out_dir, "/diff_expression_data.RData", sep=""))
