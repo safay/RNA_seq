@@ -8,6 +8,9 @@ Contains three directories:
 * diff_expression/
 * transcriptome_analysis/
 
+You can clone this repo like this:
+git clone git://github.com/safay/RNA_seq/ <new_destination_directory>
+
 --
 
 **blacklight_pipeline/**
