@@ -176,3 +176,50 @@ DEGs <- topTags(et, n=100)
 DEGs$comparison
 
 DEGlist_Di_15vs30_FC1 <- get_DEGs(et, annot=transcripts, fdr=0.000001, critFC=2)
+
+# for all the possible pairwise comparisons, you'd want to rerun the above lines for each pair
+# 15 vs 20
+DEGlist_Di_15vs20_FC1 <- get_DEGs(exactTest(y, pair=(c("15", "20"))), annot=transcripts, fdr=0.000001, critFC=2)
+
+# 15 vs 25
+DEGlist_Di_15vs25_FC1 <- get_DEGs(exactTest(y, pair=(c("15", "25"))), annot=transcripts, fdr=0.000001, critFC=2)
+
+# 25 vs 30
+DEGlist_Di_25vs30_FC1 <- get_DEGs(exactTest(y, pair=(c("25", "30"))), annot=transcripts, fdr=0.000001, critFC=2)
+
+# 20 vs 25
+DEGlist_Di_20vs25_FC1 <- get_DEGs(exactTest(y, pair=(c("20", "25"))), annot=transcripts, fdr=0.000001, critFC=2)
+
+# 20 vs 30
+DEGlist_Di_20vs30_FC1 <- get_DEGs(exactTest(y, pair=(c("20", "30"))), annot=transcripts, fdr=0.000001, critFC=2)
+
+
+
+# make a merged list of contigs with fold change of 4
+DEGlist_Di_15vs30_FC4 <- get_DEGs(exactTest(y, pair=(c("15", "30"))), annot=transcripts, fdr=0.000001, critFC=4)
+
+# for all the possible pairwise comparisons, you'd want to rerun the above lines for each pair
+# 15 vs 20
+DEGlist_Di_15vs20_FC4 <- get_DEGs(exactTest(y, pair=(c("15", "20"))), annot=transcripts, fdr=0.000001, critFC=4)
+
+# 15 vs 25
+DEGlist_Di_15vs25_FC4 <- get_DEGs(exactTest(y, pair=(c("15", "25"))), annot=transcripts, fdr=0.000001, critFC=4)
+
+# 25 vs 30
+DEGlist_Di_25vs30_FC4 <- get_DEGs(exactTest(y, pair=(c("25", "30"))), annot=transcripts, fdr=0.000001, critFC=4)
+
+# 20 vs 25
+DEGlist_Di_20vs25_FC4 <- get_DEGs(exactTest(y, pair=(c("20", "25"))), annot=transcripts, fdr=0.000001, critFC=4)
+
+# 20 vs 30
+DEGlist_Di_20vs30_FC4 <- get_DEGs(exactTest(y, pair=(c("20", "30"))), annot=transcripts, fdr=0.000001, critFC=4)
+
+merged_table = rbind(DEGlist_Di_15vs30_FC4,DEGlist_Di_15vs20_FC4,DEGlist_Di_15vs25_FC4,DEGlist_Di_25vs30_FC4,DEGlist_Di_20vs25_FC4,DEGlist_Di_20vs30_FC4)
+
+head(merged_table)
+merged_table_annotation= merged_table[,-c(2:5)]
+head(merged_table_annotation)
+merged_table_unique = unique(merged_table_annotation)
+head(merged_table_unique)
+sort(merged_table_unique)
+write.csv(merged_table_unique,"merged_table_unique.csv")

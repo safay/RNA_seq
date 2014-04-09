@@ -153,5 +153,5 @@ all_fpkm$target_id <- NULL
 colnames(all_count) <- group$sample
 colnames(all_fpkm) <- group$sample
 
-#save the two new dataframes
+#save the two new dataframes and the groupings
 save(all_count, all_fpkm, group, file = paste(out_dir, "/diff_expression_data.RData", sep=""))

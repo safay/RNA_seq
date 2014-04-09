@@ -21,14 +21,18 @@ library(Biobase)
 #
 #####
 
-# set working directory
-setwd("/Users/Shared/BigCB_Insect_Project/Dicosmo_project/Dicosmo_DGE")
+#choose the output "diff_expression_data.RData" from get_express_data.R here to get the file path
+getfilepath <- file.choose()
 
-# get the data files produced by import_express_data.R
-load(file="diff_expression_data.RData")
+# set the working directory with the output from get_express_data.R
+setwd(dirname(getfilepath))
+
+# load FPKM values, counts and groupings (output of import_express_data.R script)
+load(getfilepath)
+group
 
 # get list of transcripts that we want to cluster and make a heatmap from
-targetList <- read.table("list_of_target_genes_for_heatmap.txt", header=TRUE)
+targetList <- read.csv(file.choose())
 
 # define number of clusters
 k = 16
@@ -41,24 +45,42 @@ k = 16
 
 # make matrix of fpkm values using only those transcripts found in targetList
 data <- data.matrix(all_fpkm[(rownames(all_fpkm) %in% targetList$transcript_id),])
+
 # generate correlation matrix
-cr = cor(data, method='spearman')
+#cr = cor(data, method='spearman')
+
 # log2 transform, mean center rows
 data = log2(data+1)
 centered_data = t(scale(t(data), scale=F)) # center rows, mean substracted
+
+### Save centered_data
+
+write.csv(centered_data, "centered_data.csv")
+
+# cluster with Eisen software....
+
+
+
+
+
+
+
 # cluster genes
 hc_genes = agnes(centered_data, diss=FALSE, metric="euclidean") 
+
 # cluster conditions
 hc_samples = hclust(as.dist(1-cor(centered_data, method="spearman")), method="complete") 
 myheatcol = redgreen(75)
+
 # partition gene clusters based on "k"
 gene_partition_assignments <- cutree(as.hclust(hc_genes), k=k)
 partition_colors = rainbow(length(unique(gene_partition_assignments)), start=0.4, end=0.95)
 gene_colors = partition_colors[gene_partition_assignments]
 
 # draw heatmap
-postscript(file=paste(out_dir,"diff_expr_matrix_file.heatmap.eps",sep=""), horizontal=FALSE, width=18, height=8, paper="special")
-heatmap.2(centered_data, dendrogram="both", Rowv=as.dendrogram(hc_genes), Colv=as.dendrogram(hc_samples), col=myheatcol, RowSideColors=gene_colors, scale="none", density.info="none", trace="none", key=TRUE, keysize=1.2, cexCol=2.5, margins=c(15,15), lhei=c(0.3,2), lwid=c(2.5,4))
+postscript(file="diff_expr_matrix_file.heatmap.eps", horizontal=FALSE, width=18, height=8, paper="special")
+#heatmap.2(centered_data, dendrogram="both", Rowv=as.dendrogram(hc_genes), Colv=as.dendrogram(hc_samples), col=myheatcol, RowSideColors=gene_colors, scale="none", density.info="none", trace="none", key=TRUE, keysize=1.2, cexCol=2.5, margins=c(15,15), lhei=c(0.3,2), lwid=c(2.5,4))
+heatmap.2(centered_data, dendrogram="none", col=myheatcol, RowSideColors=gene_colors, scale="none", density.info="none", trace="none", key=TRUE, keysize=1.2, cexCol=2.5, margins=c(15,15), lhei=c(0.3,2), lwid=c(2.5,4))
 dev.off()
 
 # prep for clustering
