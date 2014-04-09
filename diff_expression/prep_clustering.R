@@ -1,10 +1,16 @@
+#!/usr/bin/Rscript
 
-
+library(optparse)
 
 #####
 #
-# User-set paramaters
-# TODO: make these command line parameters
+# Using data from "import_express_data.R,"
+# prepares input file for Cluster 3.0, open-source clustering software
+#   http://bonsai.hgc.jp/~mdehoon/software/cluster/software.htm
+# 
+# Usage:
+#   command line:
+#   prep_clustering.R 
 #
 #####
 
