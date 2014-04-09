@@ -9,6 +9,8 @@ Contains three directories:
 * transcriptome_analysis/
 
 
+--
+
 **GETTING THESE SCRIPTS**
 
 [Install and setup git](https://help.github.com/articles/set-up-git)
