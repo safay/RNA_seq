@@ -11,13 +11,13 @@ Contains three directories:
 
 --
 
-**GETTING THESE SCRIPTS**
+**Getting these scripts**
 
 [Install and setup git](https://help.github.com/articles/set-up-git)
 
 Then in a terminal window, "cd" into a relevant directory, and clone this repository into a new_destination_directory within that:
 
-git clone git://github.com/safay/RNA_seq/ <new_destination_directory>
+git clone git://github.com/safay/RNA_seq/ new_destination_directory
 
 --
 
