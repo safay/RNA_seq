@@ -14,6 +14,7 @@
 # get_express_data.R </path/to/express/output/directories/> </path/groups_filename>
 #  - First argument is a directory containing each of the xprs.output directories.
 #  - Second argument is the path and filename to a "groups" file.
+#  - Third argument is the path and filename to the trinotate tab delimited output file.
 # Saves output to the directory containing the "groups" file.
 #
 # An example groups file, tab-delimited, with four factors, "mother", "pH", and "tissue."  
@@ -64,7 +65,7 @@
 args = commandArgs(TRUE)
 xprsDir <- args[1]
 groupFile <- args[2]
-
+annotation_file <- args[3]
 # set working directory; must only contain directories containing eXpress output, no other files or directories
 setwd(xprsDir)
 
@@ -74,6 +75,9 @@ out_dir <- dirname(groupFile)
 # get a file defining groups
 group <- read.delim(groupFile)
 group
+
+# read in annotation
+transcripts <- read.delim(annotation_file,stringsAsFactors=FALSE)
 
 # creates a vector of the sequencing library directory names, "libs"
 libs <- list.files()
@@ -154,4 +158,4 @@ colnames(all_count) <- group$sample
 colnames(all_fpkm) <- group$sample
 
 #save the two new dataframes and the groupings
-save(all_count, all_fpkm, group, file = paste(out_dir, "/diff_expression_data.RData", sep=""))
+save(all_count, all_fpkm, group, transcripts, file = paste(out_dir, "/diff_expression_data.RData", sep=""))
